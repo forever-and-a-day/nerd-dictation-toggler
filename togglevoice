@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# What is our working directory? We'll use this for comparisons later. (DEBUG)
+# zenity --info --text "we're currently running in $PWD"
+
+# Create our variable that represents the "toggle" folder (or "in" dir). I come from js and I hate this.  
+inDirStringP1="/home/"  # Comes before the user variable (p1)
+inDirStringP2="/Documents/git/nerd-dictation/toggle" # Comes after the user variable (p2)
+inDirDestConcatP1=$inDirStringP1$USER # concat part 1 with user var contents
+inDirString=$inDirDestConcatP1$inDirStringP2 #concat p1+uservar with p2
+
+# Create our variable that represents our home folder. Most apps that have an option to run an executable start from home. I hate this sooo much.
+homeDirStringP1="/home/" # part 1
+homeDirString=$homeDirStringP1$USER # user var is part 2 
+
+# Testing our shit concatenation. (DEBUG)
+# zenity --info --text "inDirString is $inDirString"
+# zenity --info --text "homeDirString is $homeDirString"
+
+# Are we running from the home directory or from the "toggle" folder? If the former is true, change to later folder. 
+if [[ $PWD = $inDirString ]]; then
+ echo "not changing directory, inside ''toggle'' folder."
+elif [[ $PWD = $homeDirString ]]; then
+ echo "changing working directory to ''toggle'' from home folder"
+ cd Documents/git/nerd-dictation/toggle
+else
+ zenity --error --text "dir is $PWD, critical error"
+ exit
+fi
+
+
+# Jucy bits. I got this idea from the "lockfile" system that a lot of office apps use (and the fact that I didn't want to listen for keystrokes or keep a running process lol)
+echo "checking for listening file..."
+isListening=$(ls | grep -i -o 'listening')
+if [[ $isListening = "listening" ]]; then
+ echo "file found, stopping dictation..." 
+ sh -c 'nerd-dictation end'
+ rm listening
+ echo "removed file and dictation stopped."
+elif [[ $isListening = "" ]]; then
+ echo "file not found, staring dictation..."
+ nohup nerd-dictation begin &
+ touch listening
+ echo "dictation started. created file."
+ rm nohup.out 
+ echo "deleted nohup output log - fu nohup!"
+else
+ zenity --error --text "A critical error occoured in togglevoice.sh"
+fi
+
+echo "done"
+exit
